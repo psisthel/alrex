@@ -1,0 +1,38 @@
+USER FUNCTION RO03_RIEL(FAM)
+
+LNRESULT :=0 
+
+DO CASE
+	CASE FAM == "DBROLL"
+	
+		DO CASE	
+			CASE V_MARCA == "COU"
+				LNRESULT := "ZEB"
+			CASE V_MARCA == "LOM"
+				LNRESULT := "ZEL"
+		ENDCASE
+	
+	CASE FAM == "ROMANA"
+		LNRESULT := "CLA"
+
+	CASE FAM == "ROLLER"
+
+		IF V_RIELINFE <> " "
+	   		LNRESULT := V_RIELINFE
+   		ELSE	
+	   		DO CASE
+				CASE V_MARCA == "COU"
+					DO CASE
+						CASE V_CASSETTE == "MCCP" .OR. V_CASSETTE == "LCCP"
+					   		LNRESULT := "LAT"
+						OTHERWISE
+					   		LNRESULT := "REC"
+			   		ENDCASE
+		   		CASE V_MARCA == "ROL" .OR. V_MARCA == "EUR"
+					LNRESULT := "CLA"
+			ENDCASE
+    	ENDIF
+ENDCASE 
+
+	
+RETURN (LNRESULT)

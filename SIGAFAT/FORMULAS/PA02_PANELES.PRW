@@ -1,0 +1,40 @@
+USER FUNCTION PA02_PANELES()
+
+LNRESULT :=0
+Nvtraslape := val(V_TRASLAPE)
+PANELES := 0
+
+dbSelectArea("ZYC")
+dbSetOrder(1)
+cCod := V_TELA
+If dbSeek(xFilial("ZYC") + cCod)
+   clase := ZYC->ZYC_CLASE
+ Else
+   //MsgAlert("No se encuentran parámetros para la tela " + cCod)
+   RETURN(LNRESULT)
+EndIf
+
+
+DO CASE						// TRASLAPE
+	CASE Nvtraslape > 0	
+		TRASLAPE := Nvtraslape/100
+	CASE Alltrim(CLASE) == "BO"
+		TRASLAPE := 0.06
+	OTHERWISE
+		TRASLAPE := 0.04
+ENDCASE
+
+DO CASE						// CALCULO CANTIDAD DE PANELES
+	CASE V_ANCHOPAN == 0
+		PANELES := val(V_PANOS)
+	OTHERWISE
+		PANELES := ROUND((V_ANCHO - TRASLAPE) / (V_ANCHOPAN - TRASLAPE) , 0)
+ENDCASE
+
+IF Alltrim(V_APER) =="PAR" .AND. int(PANELES / 2) <> (PANELES / 2)	// PANELES PARTIDOS TIENE QUE TENER PAÑOS PARES
+	PANELES := PANELES + 1
+ENDIF
+
+LNRESULT := PANELES
+
+RETURN (LNRESULT)

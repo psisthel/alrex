@@ -1,0 +1,7 @@
+#INCLUDE "PROTHEUS.CH"
+USER FUNCTION AREA_MIN()
+lnResult := V_ANCHO * V_ALTO 
+IF lnResult  < 1.000
+     lnResult := 1.000
+ENDIF
+RETURN lnResult

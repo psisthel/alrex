@@ -1,0 +1,6 @@
+#INCLUDE "PROTHEUS.CH"
+USER FUNCTION FACTOR_TRAP()
+lnA := ABS( V_ALTOIZQ - V_ALTODER )
+lnC := SQRT( V_ANCHO * V_ANCHO + lnA * lnA )
+lnResult :=  lnC / V_ANCHO
+RETURN lnResult
