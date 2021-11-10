@@ -62,7 +62,7 @@ User Function ALRPCP02
 
 		oGet2:Setfocus()
 
-		@ 040,005 LISTBOX oLst VAR lVarMat1 Fields HEADER "O.P.","Producto","Almacen","Cant.Informada","Cont.Auntada" SIZE 330,180 /*On DblClick ( ConfChoice(oLst:nAt, @_aDados, @_bRet) )*/ OF oDlg PIXEL
+		@ 040,005 LISTBOX oLst VAR lVarMat1 Fields HEADER "O.P.","Producto","Almacen","Cant.Informada","Cont.Auntada" SIZE 320,130 /*On DblClick ( ConfChoice(oLst:nAt, @_aDados, @_bRet) )*/ OF oDlg PIXEL
 
 		oLst:SetArray(_aApuntes)
 		oLst:nAt := nList
