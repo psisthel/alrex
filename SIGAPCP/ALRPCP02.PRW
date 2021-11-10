@@ -15,10 +15,10 @@ User Function ALRPCP02
 	local _aArea		:= getArea()
 	local nOpc			:= 0
 	local oDlg
-	local aVetor		:= {}
-	local lHasButton	:= .T.
 	local lDo			:= .t.
 	local nCont			:= 1
+	local oLst
+	local nList			:= 0
 	
 	private _CodBarras	:= Criavar("ZZV_CODBAR")
 	private _nCantidad	:= Criavar("ZZV_QUANT")
@@ -33,7 +33,10 @@ User Function ALRPCP02
 	private oGet1
 	private oGet2
 	private oGet3
+	private _aApuntes	:= {}
 	
+	_aApuntes := _getApuntes()
+
 	do while lDo
 
 		_CodBarras	:= Criavar("ZZV_CODBAR")
@@ -46,48 +49,29 @@ User Function ALRPCP02
 		_lEmbalado	:= .f.
 		lMsErroAuto := .f.
 
-		DEFINE MSDIALOG oDlg TITLE "Apuntar Orden de Produccion" FROM 0,0 TO 300,650 PIXEL		// vertical / horizontal
-			
-		@ 010,010 SAY "Direccion:" SIZE 080,015 OF oDlg PIXEL
-		
-		if nCont==1
-			@ 020,010 MSGET oGet1 VAR _cDireccion SIZE 120,015 OF oDlg PIXEL PICTURE "@!"
-		else
-			@ 020,010 MSGET oGet1 VAR _cDireccion SIZE 090,015 OF oDlg PIXEL PICTURE "@!" WHEN .F.
-			oTButton1 := TButton():New( 020,100, "Cambia Direc.",oDlg,{|| nCont:=1,nOpc:=3,oDlg:End()}, 35,17,,,.F.,.T.,.F.,,.F.,,,.F. )
-		endif
-			
-		@ 045,010 SAY "Pase el lector de cod.de barras o digite la O.P." SIZE 080,015 OF oDlg PIXEL
-		@ 060,010 MSGET oGet2 VAR _CodBarras SIZE 120,015 OF oDlg PIXEL PICTURE "@9" WHEN .T. F3 "SC2" VALID fgetOp(_CodBarras)
-	
-		@ 080,010 SAY "Cantidad" SIZE 080,015 OF oDlg PIXEL
-		@ 090,010 MSGET oGet3 VAR _nCantidad SIZE 120,015 OF oDlg PIXEL PICTURE "@E 999,999.99" WHEN .F.
-		
-		@ 010,150 SAY "Producto:" SIZE 080,015 OF oDlg PIXEL
-		@ 010,190 MSGET _cCodeProd SIZE 120,015 OF oDlg PIXEL PICTURE "@!" WHEN .F.
-		
-		@ 030,150 SAY "Deposito:" SIZE 080,015 OF oDlg PIXEL
-		@ 030,190 MSGET _cCodeDepo SIZE 120,015 OF oDlg PIXEL PICTURE "@!" WHEN .F.
-	
-		@ 050,150 SAY "Nro.Pedido:" SIZE 080,015 OF oDlg PIXEL
-		@ 050,190 MSGET _cCodePedi SIZE 120,015 OF oDlg PIXEL PICTURE "@!" WHEN .F.
+		iif(nList = 0,nList := 1,nList)
 
-		@ 070,150 SAY "Embalado ?" SIZE 080,015 OF oDlg PIXEL
-		@ 070,190 MSGET if(_lEmbalado,"Si","No") SIZE 120,015 OF oDlg PIXEL PICTURE "@!" WHEN .F.
-		
-		@ 090,150 SAY "Entrega:" SIZE 080,015 OF oDlg PIXEL
-		@ 090,190 MSGET _dFEntrega SIZE 120,015 OF oDlg PIXEL PICTURE "@!" WHEN .F.
-		
-		oTButton1 := TButton():New( 120,010, "Confirmar",oDlg,{||msgRun("Generando apunte de producción...", "Procesando...",{|| nOpc := runApunte() }),nCont++,oGet2:Setfocus(),oDlg:End()}, 35,15,,,.F.,.T.,.F.,,.F.,,,.F. )
-		@ 120,050 BUTTON "Anular" SIZE 035,015 PIXEL OF oDlg ACTION (nOpc := 0,oDlg:End())
-		@ 120,190 BUTTON "Ver Apuntes" SIZE 120,015 PIXEL OF oDlg ACTION ( u_VERAPUNTE() )
+		DEFINE MSDIALOG oDlg TITLE "Apuntar Orden de Produccion" FROM 0,0 TO 400,650 PIXEL		// vertical / horizontal
+			
+		@ 010,005 SAY "Pase el lector de cod.de barras o digite la O.P." SIZE 200,015 OF oDlg PIXEL
+		@ 020,005 MSGET oGet2 VAR _CodBarras SIZE 200,015 OF oDlg PIXEL PICTURE "@9" WHEN .T. F3 "SC2" VALID fgetOp(_CodBarras)
+	
+		oTButton1 := TButton():New( 180,010, "Confirmar",oDlg,{||msgRun("Generando apunte de producción...", "Procesando...",{|| nOpc := runApunte() }),nCont++,oGet2:Setfocus(),oDlg:End()}, 35,15,,,.F.,.T.,.F.,,.F.,,,.F. )
+		@ 180,050 BUTTON "Anular" SIZE 035,015 PIXEL OF oDlg ACTION (nOpc := 0,oDlg:End())
+		@ 180,190 BUTTON "Ver Apuntes" SIZE 120,015 PIXEL OF oDlg ACTION ( u_VERAPUNTE() )
 
-		if nCont==1
-			oGet1:Setfocus()
-		else
-			oGet2:Setfocus()
-		endif
-									 
+		oGet2:Setfocus()
+
+		@ 040,005 LISTBOX oLst VAR lVarMat1 Fields HEADER "O.P.","Producto","Almacen","Cant.Informada","Cont.Auntada" SIZE 330,180 /*On DblClick ( ConfChoice(oLst:nAt, @_aDados, @_bRet) )*/ OF oDlg PIXEL
+
+		oLst:SetArray(_aApuntes)
+		oLst:nAt := nList
+		oLst:bLine := { || { 	_aApuntes[oLst:nAt,1],;
+								_aApuntes[oLst:nAt,2],;
+								_aApuntes[oLst:nAt,3],;
+								Transform( _aApuntes[oLst:nAt,4],"999.99"),;
+								Transform( _aApuntes[oLst:nAt,5],"999.99") }}
+
 		Activate MSDialog oDlg Centered
 		
 		if nOpc==1
@@ -126,8 +110,6 @@ Static Function fgetOp(_pCodBarras)
 
 	local _lret     := .t.
 	local _acodBar  := {}
-	local cQry      := ""
-	local _cAlias   := getNextAlias()
     local nX        := 1
     local cBarraOri := _pCodBarras
 	
@@ -145,33 +127,34 @@ Static Function fgetOp(_pCodBarras)
 			_pCodBarras += "001"	//strzero(val(_acodBar[nX]),3)
 		endif
 	next nX
+
+	_pCodBarras := "08260401001"
+	cBarraOri := _pCodBarras
 	
 	if !empty(_pCodBarras)
 
 		SC2->( dbSetOrder(1) )		// C2_FILIAL, C2_NUM, C2_ITEM, C2_SEQUEN, C2_ITEMGRD
-		if SC2->( dbSeek( xFilial("SC2")+_pCodBarras ) )
+		SC2->( dbSeek( xFilial("SC2")+_pCodBarras ) )
 
-	
 		ZZV->( dbSetOrder(5) )		// ZZV_FILIAL, ZZV_CODBAR
 		if ZZV->( !dbSeek( xFilial("ZZV")+cBarraOri ) )
             ZZV->(RecLock('ZZV',.t.))
             ZZV->ZZV_FILIAL     := xFilial("ZZV")
-            ZZV->ZZV_PEDIDO     := 
-            ZZV->ZZV_ITEMPV 
-            ZZV->ZZV_OP 
-            ZZV->ZZV_FASE 
-            ZZV->ZZV_PROD 
-            ZZV->ZZV_LOCAL 
-            ZZV->ZZV_EMIS 
-            ZZV->ZZV_QUANT 
-            ZZV->ZZV_USUINC 
-            ZZV->ZZV_DATINC 
-            ZZV->ZZV_HORINC 
-            ZZV->D_E_L_E_T_ 
-            ZZV->R_E_C_N_O_ 
-            ZZV->R_E_C_D_E_L_ 
-            ZZV->ZZV_CODBAR 
-            ZZV->ZZV_DIRECC 
+            ZZV->ZZV_PEDIDO     := SC2->C2_PEDIDO
+            ZZV->ZZV_ITEMPV 	:= SC2->C2_ITEMPV
+            ZZV->ZZV_OP 		:= SC2->C2_NUM
+            ZZV->ZZV_FASE 		:= 1
+            ZZV->ZZV_PROD 		:= SC2->C2_PRODUTO
+            ZZV->ZZV_LOCAL 		:= SC2->C2_LOCAL
+            ZZV->ZZV_EMIS 		:= dDataBase
+            ZZV->ZZV_QUANT 		:= SC2->C2_QUANT
+            ZZV->ZZV_SEQ 		:= 1
+            ZZV->ZZV_USUINC 	:= Upper(cUserName)
+            ZZV->ZZV_DATINC 	:= dDataBase
+            ZZV->ZZV_HORINC 	:= time()
+            ZZV->ZZV_CODBAR 	:= cBarraOri
+            ZZV->ZZV_DIRECC 	:= ""
+			ZZV->(MsUnlock())
 
 			_lret := .t.
         else
@@ -181,20 +164,6 @@ Static Function fgetOp(_pCodBarras)
 	
 		if _lret
 	
-			SC5->( dbSetOrder(1) )
-			if SC5->( dbSeek( xFilial("SC5")+_cCodePedi ) )
-				_dFEntrega := SC5->C5_SUGENT
-				if SC5->C5_EMBALAD=="2"
-					_lEmbalado := .f.
-				else
-					_lEmbalado := .t.
-				endif
-			endif
-			
-			if _nCantidad> 0
-				_nCantidad := 1
-			endif
-			
 			if !empty(_CodBarras) .And. _nCantidad > 0
 				oTButton1:Click()
 			endif
@@ -224,7 +193,6 @@ Static Function runApunte()
     
 	local _nop := 0
 	local _cPartotal := SC5->C5_YSTATUS
-	local xAlias := GetNextAlias()
 	local _xPartotal := "T"
 	
 	if !empty(_CodBarras) .And. _nCantidad > 0 .And. ( _nCantidad <= ( SC2->C2_QUANT - SC2->C2_QUJE ) )
@@ -254,3 +222,42 @@ Static Function runApunte()
 
 return( _nop )
 
+
+Static Function _getApuntes()
+
+	Local oArea		:= getArea()
+	Local cQry1		:= ""
+	Local cAlias	:= getNextAlias()
+	Local aUltComp	:= {}
+
+	cQry1 := "SELECT TOP 20 * "
+	cQry1 += "  FROM " + RetSqlname("ZZV")
+	cQry1 += " WHERE ZZV_FILIAL='"+xFilial("ZZV")+"'"
+	cQry1 += "   AND D_E_L_E_T_=''"
+	cQry1 += " ORDER BY ZZV_OP,ZZV_SEQ"
+	 
+	DbUseArea(.T.,"TOPCONN", TCGENQRY(,,cQry1),cAlias, .F., .T.)
+ 
+	If (cAlias)->( !Eof() )
+
+		While (cAlias)->( !Eof() )
+		
+			Aadd( aUltComp, {	(cAlias)->ZZV_OP,;
+								(cAlias)->ZZV_PROD,;
+								(cAlias)->ZZV_LOCAL,;
+								(cAlias)->ZZV_QUANT,;
+								(cAlias)->ZZV_SEQ;
+							 } )
+
+			(cAlias)->( dbSkip() )
+
+		End
+	Else
+		Aadd( aUltComp, { "", "", "", "", ""} )
+	Endif
+	
+	(cAlias)->( dbCloseArea() )
+	
+	RestArea( oArea )
+
+Return( aUltComp )
